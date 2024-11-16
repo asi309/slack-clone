@@ -1,20 +1,20 @@
 import http from 'node:http';
 
 import { Server } from 'socket.io';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cookieSession from 'cookie-session';
 import morgan from 'morgan';
 import helmet from 'helmet';
-import xss from 'xss-clean';
 import hpp from 'hpp';
 import cors from 'cors';
-import passport from 'passport';
+// import passport from 'passport';
 
 dotenv.config();
 import connectDB from './config/db';
 
+const port = process.env.PORT || 8000;
 const app = express();
 const server = http.createServer(app);
 // Initializing socket.io
@@ -30,7 +30,7 @@ if (!process.env.MONGODB_URI) {
   console.error('MONGODB_URI is undefined');
   process.exit(1);
 }
-connectDB();
+connectDB().then(startServer);
 
 // Express configuration
 app.use(
@@ -42,8 +42,8 @@ app.use(
 );
 
 // Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -57,17 +57,22 @@ if (process.env.NODE_ENV === 'dev') {
 // Set security headers
 app.use(helmet());
 
-// Prevent XSS attacks
-app.use(xss());
-
 // Prevent http param pollution
 app.use(hpp());
 
 // Enable CORS for express app
 app.use(cors());
 
-// Start the server
-const port = process.env.PORT || 8000;
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.get('/', (req: Request, res: Response) => {
+  res.json({
+    statusCode: 200,
+    message: 'Server is running',
+  });
 });
+
+// Start the server
+function startServer() {
+  server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
