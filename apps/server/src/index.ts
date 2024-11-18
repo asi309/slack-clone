@@ -1,4 +1,5 @@
 import http from 'node:http';
+import path from 'node:path';
 
 import { Server } from 'socket.io';
 import express, { Request, Response } from 'express';
@@ -17,6 +18,7 @@ import connectDB from './config/db';
 const port = process.env.PORT || 8000;
 const app = express();
 const server = http.createServer(app);
+
 // Initializing socket.io
 const io = new Server(server, {
   cors: {
@@ -55,7 +57,7 @@ if (process.env.NODE_ENV === 'dev') {
 }
 
 // Set security headers
-app.use(helmet());
+// app.use(helmet());
 
 // Prevent http param pollution
 app.use(hpp());
@@ -63,11 +65,25 @@ app.use(hpp());
 // Enable CORS for express app
 app.use(cors());
 
+// Express Server
 app.get('/', (req: Request, res: Response) => {
   res.json({
     statusCode: 200,
     message: 'Server is running',
   });
+});
+
+// Test code for testing sockets
+app.use(express.static(path.resolve('../public')));
+
+app.get('/test', (req, res) => {
+  return res.sendFile(path.resolve('./public/index.html'));
+});
+
+// Socket Server
+io.on('connection', (socket) => {
+  console.log(socket.id);
+  socket.emit('connection:message', socket.id);
 });
 
 // Start the server
